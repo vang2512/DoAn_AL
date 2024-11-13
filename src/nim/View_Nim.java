@@ -1,4 +1,4 @@
-package tuan_3;
+package nim;
 
 import javax.swing.*;
 import java.awt.*;
