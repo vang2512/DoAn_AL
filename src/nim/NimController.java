@@ -9,25 +9,14 @@ import java.awt.event.WindowEvent;
 public class NimController {
     private NimModel model;
     private NimView view;
+    private boolean playerStarts;
 
     public NimController(NimModel model, NimView view) {
         this.model = model;
         this.view = view;
-        
+        view.getPlayerButton().addActionListener(e -> handlePlayerTurn());
+        view.getComputerButton().addActionListener(e -> handleComputerTurn());
         view.getNewGameButton().addActionListener(e -> startNewGame());
-        view.getRemoveButton().addActionListener(e -> {
-            if (model.isPlayerTurn()) {
-                int selectedRow = getSelectedRow();
-                if (selectedRow != -1) {
-                    model.removeCircles(selectedRow);
-                    if (!model.isGameEnded() && !model.isPlayerTurn()) {
-                        model.computerTurn();
-                    }
-                }
-            }
-            view.repaint();
-        });
-
         view.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -36,6 +25,7 @@ public class NimController {
             }
         });
     }
+
     private void startNewGame() {
         String rowInput = JOptionPane.showInputDialog("Nhập số lượng hàng:");
         if (rowInput == null || rowInput.isEmpty()) return;
@@ -48,7 +38,7 @@ public class NimController {
         }
         int[] pileSizes = new int[numRows];
         for (int i = 0; i < numRows; i++) {
-            String pileInput = JOptionPane.showInputDialog("Nhập số lượng ảnh cho hàng " + (i + 1) + ":");
+            String pileInput = JOptionPane.showInputDialog("Nhập số lượng que cho hàng " + (i + 1) + ":");
             if (pileInput == null || pileInput.isEmpty()) return;
             try {
                 pileSizes[i] = Integer.parseInt(pileInput);
@@ -58,8 +48,48 @@ public class NimController {
             }
         }
         model.startNewGame(numRows, pileSizes);
+        determineFirstTurn();
+        view.updateButtonStyles(); 
         view.repaint();
     }
+    private void determineFirstTurn() {
+        int choice = JOptionPane.showOptionDialog(view,
+                "Bạn muốn ai đi trước?", "Chọn lượt chơi",
+                JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE,
+                null, new String[]{"Người chơi", "Máy tính"}, "Người chơi");
+        if (choice == JOptionPane.YES_OPTION) {
+            playerStarts = true;
+        } else {
+            playerStarts = false;
+        }
+        model.setPlayerTurn(playerStarts); 
+    }
+    private void handlePlayerTurn() {
+        if (!model.isGameEnded() && model.isPlayerTurn()) {
+            int selectedRow = getSelectedRow();
+            if (selectedRow != -1) {
+                model.removeCircles(selectedRow);
+                if (!model.isGameEnded()) {
+                    model.setPlayerTurn(false); 
+                }
+            } else {
+                JOptionPane.showMessageDialog(view, "Vui lòng chọn ít nhất một que để xóa!", "Lỗi", JOptionPane.WARNING_MESSAGE);
+            }
+            view.updateButtonStyles(); 
+            view.repaint();
+        }
+    }
+    private void handleComputerTurn() {
+        if (!model.isGameEnded() && !model.isPlayerTurn()) {
+            model.computerTurn();
+            if (!model.isGameEnded()) {
+                model.setPlayerTurn(true); 
+            }
+            view.updateButtonStyles(); 
+            view.repaint();
+        }
+    }
+
     private void handleMouseClick(int x, int y) {
         int rowHeight = 100;
         int imageWidth = 130;
@@ -75,6 +105,7 @@ public class NimController {
             }
             startX += imageWidth + gap;
         }
+        view.repaint();
     }
 
     private int getSelectedRow() {
@@ -83,22 +114,35 @@ public class NimController {
                 if (selected) return i;
             }
         }
-        return -1; 
+        return -1;
     }
+
     public void run() {
         JFrame frame = new JFrame("Trò chơi Nim");
         frame.add(view);
         frame.setSize(800, 600);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setVisible(true);
+        frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        frame.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                int confirmed = JOptionPane.showConfirmDialog(frame, "Bạn có chắc chắn muốn thoát không?",
+                        "Xác nhận thoát", JOptionPane.YES_NO_OPTION);
+                if (confirmed == JOptionPane.YES_OPTION)
+                    frame.dispose();
+            }
+        });
+        frame.setVisible(true);
     }
     public static void main(String[] args) {
-		   NimModel model = new NimModel();
-	        NimView view = new NimView();
-	        NimController controller = new NimController(model, view);
-	        controller.startNewGame();
-	        view.setModel(model);
-	        controller.run();
-	}
+        NimModel model = new NimModel(); 
+        NimView view = new NimView();
+        NimController controller = new NimController(model, view);
+        view.setModel(model); 
+        controller.startNewGame(); 
+        controller.run(); 
+    }
 
 }
+

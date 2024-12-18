@@ -27,15 +27,12 @@ public class NimModel {
 	public boolean[][] getSelectedCircles() {
 		return selectedCircles;
 	}
-
 	public boolean isPlayerTurn() {
 		return playerTurn;
 	}
-
 	public boolean isGameEnded() {
 		return gameEnded;
 	}
-
 	public void selectCircle(int row, int index) {
 		if (row >= 0 && row < piles.length && index >= 0 && index < piles[row]) {
 			for (int i = 0; i < selectedCircles.length; i++) {
@@ -48,7 +45,6 @@ public class NimModel {
 			selectedCircles[row][index] = !selectedCircles[row][index];
 		}
 	}
-
 	public void removeCircles(int row) {
 		boolean wasPlayerTurn = playerTurn;
 
@@ -70,7 +66,6 @@ public class NimModel {
 			playerTurn = !playerTurn;
 		}
 	}
-
 	private boolean checkGameEnd() {
 		for (int pile : piles) {
 			if (pile > 0)
@@ -78,11 +73,12 @@ public class NimModel {
 		}
 		return true;
 	}
-
 	public boolean isGameOver() {
 		return gameEnded;
 	}
-
+	public void setPlayerTurn(boolean playerTurn) {
+	    this.playerTurn = playerTurn;
+	}
 	public void computerTurn() {
 		if (gameEnded)
 			return;
@@ -124,7 +120,10 @@ public class NimModel {
 				return;
 			}
 		}
-		int nimSum = calculateNimSum();
+		int nimSum = 0;
+		for (int pile : piles) {
+			nimSum ^= pile;
+		}
 		if (nimSum != 0) {
 			for (int i = 0; i < piles.length; i++) {
 				int target = piles[i] ^ nimSum;
@@ -147,7 +146,7 @@ public class NimModel {
 			int bestEval = Integer.MIN_VALUE;
 			NimModel bestMove = null;
 			for (NimModel child : generateChildren(true)) {
-				int eval = minimaxWithAlphaBeta(child, 3, Integer.MIN_VALUE, Integer.MAX_VALUE, false);
+				int eval = minimaxWithAlphaBeta(child, 5, Integer.MIN_VALUE, Integer.MAX_VALUE, false);
 				if (eval > bestEval) {
 					bestEval = eval;
 					bestMove = child;
@@ -159,15 +158,6 @@ public class NimModel {
 			}
 		}
 	}
-
-	private int calculateNimSum() {
-		int nimSum = 0;
-		for (int pile : piles) {
-			nimSum ^= pile;
-		}
-		return nimSum;
-	}
-
 	public List<NimModel> generateChildren(boolean isMaximizing) {
 		List<NimModel> children = new ArrayList<>();
 		for (int row = 0; row < piles.length; row++) {
@@ -184,12 +174,10 @@ public class NimModel {
 		}
 		return children;
 	}
-
 	public int minimaxWithAlphaBeta(NimModel node, int depth, int alpha, int beta, boolean isMaximizing) {
 		if (depth == 0 || node.isGameOver()) {
 			return heuristic(node);
 		}
-
 		if (isMaximizing) {
 			int maxEval = Integer.MIN_VALUE;
 			for (NimModel child : node.generateChildren(true)) {
@@ -212,8 +200,38 @@ public class NimModel {
 			return minEval;
 		}
 	}
-
 	public int heuristic(NimModel state) {
-		return calculateNimSum() == 0 ? -1 : 1;
+	    int nimSum = 0;
+	    int smallPiles = 0;
+	    int largePiles = 0;
+	    int totalPileSize = 0;
+	    int numPiles = state.piles.length;
+	    int heuristicValue = 0;
+	    for (int pile : state.piles) {
+	        nimSum ^= pile;
+	        totalPileSize += pile;  
+	        if (pile <= 2) {
+	            smallPiles++;
+	        }
+	        if (pile >= 5) {
+	            largePiles++;
+	        }
+	    }
+	    if (nimSum != 0) {
+	        heuristicValue += 10;  
+	    } else {
+	        heuristicValue -= 10; 
+	    }
+	    if (smallPiles > 2) {
+	        heuristicValue += 5; 
+	    }
+	    if (largePiles > 1) {
+	        heuristicValue -= 5;  
+	    }
+	    if (totalPileSize > numPiles * 5) {
+	        heuristicValue -= 3;  
+	    }
+	    return heuristicValue;
 	}
+
 }
