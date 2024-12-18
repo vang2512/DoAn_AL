@@ -8,7 +8,6 @@ public class NimModel {
 	private boolean[][] selectedCircles;
 	private boolean playerTurn;
 	private boolean gameEnded;
-
 	public void startNewGame(int numRows, int[] pileSizes) {
 		piles = new int[numRows];
 		selectedCircles = new boolean[numRows][];

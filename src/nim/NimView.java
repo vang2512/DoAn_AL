@@ -51,7 +51,6 @@ public class NimView extends JPanel {
     public JButton getNewGameButton() {
         return newGameButton;
     }
-
     public void drawGame(int[] piles, boolean[][] selectedCircles, boolean gameEnded, boolean playerTurn, Graphics g) {
         if (backgroundImage != null) {
             g.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), null);
@@ -68,7 +67,6 @@ public class NimView extends JPanel {
             g.drawString(winner, getWidth() / 2 - 150, getHeight() / 2);
         }
     }
-
     private void drawRow(Graphics g, int numCircles, boolean[] selected, int y) {
         int imageWidth = 130;
         int gap = 5;
@@ -80,7 +78,6 @@ public class NimView extends JPanel {
             x += imageWidth + gap;
         }
     }
-
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
@@ -88,7 +85,6 @@ public class NimView extends JPanel {
             drawGame(model.getPiles(), model.getSelectedCircles(), model.isGameEnded(), model.isPlayerTurn(), g);
         }
     }
-
     public void updateButtonStyles() {
         if (model != null && model.isPlayerTurn()) {
             playerButton.setBackground(Color.GREEN);
