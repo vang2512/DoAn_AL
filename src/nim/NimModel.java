@@ -8,6 +8,7 @@ public class NimModel {
 	private boolean[][] selectedCircles;
 	private boolean playerTurn;
 	private boolean gameEnded;
+
 	public void startNewGame(int numRows, int[] pileSizes) {
 		piles = new int[numRows];
 		selectedCircles = new boolean[numRows][];
@@ -15,7 +16,6 @@ public class NimModel {
 			piles[i] = pileSizes[i];
 			selectedCircles[i] = new boolean[pileSizes[i]];
 		}
-		playerTurn = true;
 		gameEnded = false;
 	}
 
@@ -26,12 +26,15 @@ public class NimModel {
 	public boolean[][] getSelectedCircles() {
 		return selectedCircles;
 	}
+
 	public boolean isPlayerTurn() {
 		return playerTurn;
 	}
+
 	public boolean isGameEnded() {
 		return gameEnded;
 	}
+
 	public void selectCircle(int row, int index) {
 		if (row >= 0 && row < piles.length && index >= 0 && index < piles[row]) {
 			for (int i = 0; i < selectedCircles.length; i++) {
@@ -44,9 +47,9 @@ public class NimModel {
 			selectedCircles[row][index] = !selectedCircles[row][index];
 		}
 	}
+
 	public void removeCircles(int row) {
 		boolean wasPlayerTurn = playerTurn;
-
 		for (int i = 0; i < selectedCircles[row].length; i++) {
 			if (selectedCircles[row][i]) {
 				selectedCircles[row][i] = false;
@@ -65,6 +68,7 @@ public class NimModel {
 			playerTurn = !playerTurn;
 		}
 	}
+
 	private boolean checkGameEnd() {
 		for (int pile : piles) {
 			if (pile > 0)
@@ -72,11 +76,12 @@ public class NimModel {
 		}
 		return true;
 	}
+
 	public boolean isGameOver() {
 		return gameEnded;
 	}
 	public void setPlayerTurn(boolean playerTurn) {
-	    this.playerTurn = playerTurn;
+		this.playerTurn = playerTurn;
 	}
 	public void computerTurn() {
 		if (gameEnded)
@@ -102,22 +107,28 @@ public class NimModel {
 				removeCircles(row);
 				return;
 			}
-		} else if (nonEmptyRows.size() == 2 && (piles[nonEmptyRows.get(0)] == 1 || piles[nonEmptyRows.get(1)] == 1)) {
-			int row1 = nonEmptyRows.get(0);
-			int row2 = nonEmptyRows.get(1);
-			if (piles[row1] != 1) {
-				for (int j = 0; j < piles[row1]; j++) {
-					selectedCircles[row1][j] = true;
-				}
-				removeCircles(row1);
-				return;
-			} else if (piles[row2] != 1) {
-				for (int j = 0; j < piles[row2]; j++) {
-					selectedCircles[row2][j] = true;
-				}
-				removeCircles(row2);
-				return;
-			}
+		} else if (nonEmptyRows.size() == 2) {
+		    int row1 = nonEmptyRows.get(0);
+		    int row2 = nonEmptyRows.get(1);
+		    if (piles[row1] == 1 || piles[row2] == 1) {
+		        if (piles[row1] != 1) {
+		            for (int j = 0; j < piles[row1]; j++) {
+		                selectedCircles[row1][j] = true;
+		            }
+		            removeCircles(row1);
+		        } else {
+		            for (int j = 0; j < piles[row2]; j++) {
+		                selectedCircles[row2][j] = true;
+		            }
+		            removeCircles(row2);
+		        }
+		        return;
+		    }
+		    if (piles[row1] == 1 && piles[row2] == 1) {
+		        selectedCircles[row1][0] = true;
+		        removeCircles(row1);
+		        return;
+		    }
 		}
 		int nimSum = 0;
 		for (int pile : piles) {
@@ -145,7 +156,7 @@ public class NimModel {
 			int bestEval = Integer.MIN_VALUE;
 			NimModel bestMove = null;
 			for (NimModel child : generateChildren(true)) {
-				int eval = minimaxWithAlphaBeta(child, 5, Integer.MIN_VALUE, Integer.MAX_VALUE, false);
+				int eval = minimax(child, 4, false);
 				if (eval > bestEval) {
 					bestEval = eval;
 					bestMove = child;
@@ -157,80 +168,103 @@ public class NimModel {
 			}
 		}
 	}
-	public List<NimModel> generateChildren(boolean isMaximizing) {
-		List<NimModel> children = new ArrayList<>();
-		for (int row = 0; row < piles.length; row++) {
-			for (int count = 1; count <= piles[row]; count++) {
-				NimModel child = new NimModel();
-				child.piles = piles.clone();
-				child.piles[row] -= count;
-				child.selectedCircles = new boolean[piles.length][];
-				for (int i = 0; i < piles.length; i++) {
-					child.selectedCircles[i] = selectedCircles[i].clone();
-				}
-				children.add(child);
-			}
-		}
-		return children;
+	// Minimax
+	public int minimax(NimModel node, int depth, boolean isMaximizing) {
+	    if (depth == 0 || node.isGameOver()) {
+	        return heuristic(node);
+	    }
+	    if (isMaximizing) {
+	        int maxEval = Integer.MIN_VALUE;
+	        for (NimModel child : node.generateChildren(true)) {  
+	            int eval = minimax(child, depth - 1, false);
+	            maxEval = Math.max(maxEval, eval);
+	        }
+	        return maxEval;
+	    } else {
+	        int minEval = Integer.MAX_VALUE;
+	        for (NimModel child : node.generateChildren(false)) { 
+	            int eval = minimax(child, depth - 1, true);
+	            minEval = Math.min(minEval, eval);
+	        }
+	        return minEval;
+	    }
 	}
-	public int minimaxWithAlphaBeta(NimModel node, int depth, int alpha, int beta, boolean isMaximizing) {
-		if (depth == 0 || node.isGameOver()) {
-			return heuristic(node);
-		}
-		if (isMaximizing) {
-			int maxEval = Integer.MIN_VALUE;
-			for (NimModel child : node.generateChildren(true)) {
-				int eval = minimaxWithAlphaBeta(child, depth - 1, alpha, beta, false);
-				maxEval = Math.max(maxEval, eval);
-				alpha = Math.max(alpha, eval);
-				if (beta <= alpha)
-					break;
-			}
-			return maxEval;
-		} else {
-			int minEval = Integer.MAX_VALUE;
-			for (NimModel child : node.generateChildren(false)) {
-				int eval = minimaxWithAlphaBeta(child, depth - 1, alpha, beta, true);
-				minEval = Math.min(minEval, eval);
-				beta = Math.min(beta, eval);
-				if (beta <= alpha)
-					break;
-			}
-			return minEval;
-		}
+	// Alphabeta
+	public int alphaBetaPruning(NimModel node, int depth, int alpha, int beta, boolean isMaximizing) {
+	    if (depth == 0 || node.isGameOver()) {
+	        return heuristic(node);
+	    }
+	    if (isMaximizing) {
+	        int maxEval = Integer.MIN_VALUE;
+	        for (NimModel child : node.generateChildren(true)) {  
+	            int eval = alphaBetaPruning(child, depth - 1, alpha, beta, false);
+	            maxEval = Math.max(maxEval, eval);
+	            alpha = Math.max(alpha, eval);
+	            if (beta <= alpha) {
+	                break;
+	            }
+	        }
+	        return maxEval;
+	    } else {
+	        int minEval = Integer.MAX_VALUE;
+	        for (NimModel child : node.generateChildren(false)) {  
+	            int eval = alphaBetaPruning(child, depth - 1, alpha, beta, true);
+	            minEval = Math.min(minEval, eval);
+	            beta = Math.min(beta, eval);
+	            if (beta <= alpha) {
+	                break;
+	            }
+	        }
+	        return minEval;
+	    }
+	}
+	public List<NimModel> generateChildren(boolean isMaximizing) {
+	    List<NimModel> children = new ArrayList<>();
+	    for (int row = 0; row < piles.length; row++) {
+	        for (int count = 1; count <= piles[row]; count++) { 
+	            NimModel child = new NimModel();
+	            child.piles = piles.clone();
+	            child.piles[row] -= count;
+	            child.selectedCircles = new boolean[piles.length][];
+	            for (int i = 0; i < piles.length; i++) {
+	                child.selectedCircles[i] = new boolean[selectedCircles[i].length];
+	            }
+	            children.add(child);
+	        }
+	    }
+	    return children;
 	}
 	public int heuristic(NimModel state) {
-	    int nimSum = 0;
-	    int smallPiles = 0;
-	    int largePiles = 0;
-	    int totalPileSize = 0;
-	    int numPiles = state.piles.length;
-	    int heuristicValue = 0;
-	    for (int pile : state.piles) {
-	        nimSum ^= pile;
-	        totalPileSize += pile;  
-	        if (pile <= 2) {
-	            smallPiles++;
-	        }
-	        if (pile >= 5) {
-	            largePiles++;
-	        }
-	    }
-	    if (nimSum != 0) {
-	        heuristicValue += 10;  
-	    } else {
-	        heuristicValue -= 10; 
-	    }
-	    if (smallPiles > 2) {
-	        heuristicValue += 5; 
-	    }
-	    if (largePiles > 1) {
-	        heuristicValue -= 5;  
-	    }
-	    if (totalPileSize > numPiles * 5) {
-	        heuristicValue -= 3;  
-	    }
-	    return heuristicValue;
-	}
+		int nimSum = 0;
+		int smallPiles = 0;
+		int largePiles = 0;
+		int totalPileSize = 0;
+		int numPiles = state.piles.length;
+		int heuristicValue = 0;
+		for (int pile : state.piles) {
+			nimSum ^= pile;
+			totalPileSize += pile;
 
+			if (pile == 1) {
+				smallPiles++;
+			} else if (pile <= 3) {
+				smallPiles++;
+			}
+			if (pile >= 5) {
+				largePiles++;
+			}
+		}
+		heuristicValue += (nimSum != 0) ? 20 : -20;
+		heuristicValue += smallPiles * 3;
+		heuristicValue -= largePiles * 4;
+		if (totalPileSize > numPiles * 4) {
+			heuristicValue -= 5;
+		} else if (totalPileSize <= 10) {
+			heuristicValue += smallPiles * 4;
+		}
+		if (numPiles == 1 && totalPileSize > 1) {
+			heuristicValue -= 10;
+		}
+		return heuristicValue;
+	}
 }

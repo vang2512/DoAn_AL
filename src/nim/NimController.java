@@ -89,8 +89,10 @@ public class NimController {
             view.repaint();
         }
     }
-
     private void handleMouseClick(int x, int y) {
+    	 if (!model.isPlayerTurn() || model.isGameEnded()) {
+    	        return;
+    	    }
         int rowHeight = 100;
         int imageWidth = 130;
         int gap = 5;
@@ -107,7 +109,6 @@ public class NimController {
         }
         view.repaint();
     }
-
     private int getSelectedRow() {
         for (int i = 0; i < model.getSelectedCircles().length; i++) {
             for (boolean selected : model.getSelectedCircles()[i]) {
@@ -116,7 +117,6 @@ public class NimController {
         }
         return -1;
     }
-
     public void run() {
         JFrame frame = new JFrame("Trò chơi Nim");
         frame.add(view);
