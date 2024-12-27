@@ -25,7 +25,6 @@ public class NimController {
             }
         });
     }
-
     private void startNewGame() {
         String rowInput = JOptionPane.showInputDialog("Nhập số lượng hàng:");
         if (rowInput == null || rowInput.isEmpty()) return;

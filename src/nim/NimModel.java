@@ -18,23 +18,18 @@ public class NimModel {
 		}
 		gameEnded = false;
 	}
-
 	public int[] getPiles() {
 		return piles;
 	}
-
 	public boolean[][] getSelectedCircles() {
 		return selectedCircles;
 	}
-
 	public boolean isPlayerTurn() {
 		return playerTurn;
 	}
-
 	public boolean isGameEnded() {
 		return gameEnded;
 	}
-
 	public void selectCircle(int row, int index) {
 		if (row >= 0 && row < piles.length && index >= 0 && index < piles[row]) {
 			for (int i = 0; i < selectedCircles.length; i++) {
@@ -147,6 +142,10 @@ public class NimModel {
 				}
 			}
 		} else {
+			 Runtime runtime = Runtime.getRuntime();
+			runtime.gc();
+		    long memoryBefore = runtime.totalMemory() - runtime.freeMemory();
+			long startTime = System.nanoTime();
 			NimModel currentState = new NimModel();
 			currentState.piles = piles.clone();
 			currentState.selectedCircles = new boolean[piles.length][];
@@ -156,7 +155,7 @@ public class NimModel {
 			int bestEval = Integer.MIN_VALUE;
 			NimModel bestMove = null;
 			for (NimModel child : generateChildren(true)) {
-				int eval = minimax(child, 4, false);
+	            int eval = alphaBetaPruning(child, 3, Integer.MIN_VALUE, Integer.MAX_VALUE, false); 
 				if (eval > bestEval) {
 					bestEval = eval;
 					bestMove = child;
@@ -166,6 +165,10 @@ public class NimModel {
 				this.piles = bestMove.piles;
 				this.selectedCircles = bestMove.selectedCircles;
 			}
+			 long endTime = System.nanoTime();
+			 long memoryAfter = runtime.totalMemory() - runtime.freeMemory();
+			 System.out.println("Time: " + (endTime - startTime) / 1_000_000 + " ms");
+			 System.out.println("Memory: " + (memoryAfter - memoryBefore) / 1024 + " KB");
 		}
 	}
 	// Minimax
@@ -235,36 +238,11 @@ public class NimModel {
 	    return children;
 	}
 	public int heuristic(NimModel state) {
-		int nimSum = 0;
-		int smallPiles = 0;
-		int largePiles = 0;
-		int totalPileSize = 0;
-		int numPiles = state.piles.length;
-		int heuristicValue = 0;
-		for (int pile : state.piles) {
-			nimSum ^= pile;
-			totalPileSize += pile;
+		    int nimSum = 0;
+		    for (int pile : state.piles) {
+		        nimSum ^= pile;
+		    }
+		    return (nimSum != 0) ? 20 : -20;
+		}
 
-			if (pile == 1) {
-				smallPiles++;
-			} else if (pile <= 3) {
-				smallPiles++;
-			}
-			if (pile >= 5) {
-				largePiles++;
-			}
-		}
-		heuristicValue += (nimSum != 0) ? 20 : -20;
-		heuristicValue += smallPiles * 3;
-		heuristicValue -= largePiles * 4;
-		if (totalPileSize > numPiles * 4) {
-			heuristicValue -= 5;
-		} else if (totalPileSize <= 10) {
-			heuristicValue += smallPiles * 4;
-		}
-		if (numPiles == 1 && totalPileSize > 1) {
-			heuristicValue -= 10;
-		}
-		return heuristicValue;
-	}
 }

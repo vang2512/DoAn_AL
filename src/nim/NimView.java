@@ -15,7 +15,6 @@ public class NimView extends JPanel {
     private JButton computerButton;
     private JButton newGameButton;
     private NimModel model;
-
     public void setModel(NimModel model) {
         this.model = model; 
         repaint(); 
@@ -51,6 +50,7 @@ public class NimView extends JPanel {
     public JButton getNewGameButton() {
         return newGameButton;
     }
+    // Cap nhat lai giao dien gom hinh nen & cac nut & trang thai tro choi
     public void drawGame(int[] piles, boolean[][] selectedCircles, boolean gameEnded, boolean playerTurn, Graphics g) {
         if (backgroundImage != null) {
             g.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), null);
@@ -67,6 +67,7 @@ public class NimView extends JPanel {
             g.drawString(winner, getWidth() / 2 - 150, getHeight() / 2);
         }
     }
+    // Ve cac nut trong hang va canh chinh khoang cach
     private void drawRow(Graphics g, int numCircles, boolean[] selected, int y) {
         int imageWidth = 130;
         int gap = 5;
@@ -85,6 +86,7 @@ public class NimView extends JPanel {
             drawGame(model.getPiles(), model.getSelectedCircles(), model.isGameEnded(), model.isPlayerTurn(), g);
         }
     }
+    // Thay doi mau sac tuong ung voi trang thai nguoi choi
     public void updateButtonStyles() {
         if (model != null && model.isPlayerTurn()) {
             playerButton.setBackground(Color.GREEN);
